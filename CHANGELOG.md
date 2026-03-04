@@ -11,6 +11,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Current date injection in system prompt — LLM correctly resolves relative dates ("bis März", "letzter Monat")
 
+#### Changed
+
+- `db/README.md`: made product-agnostic — references `DB_NAME` from `.env` instead of hardcoded database names
+
 ### [0.1.0] - 2026-03-04
 
 #### Added
