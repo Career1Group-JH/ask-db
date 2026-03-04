@@ -1,4 +1,4 @@
-import { SquarePen, Trash2, MessageSquare } from "lucide-react";
+import { ThemeToggle } from "@/components/atoms/ThemeToggle";
 import {
   Sidebar,
   SidebarContent,
@@ -8,8 +8,8 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/atoms/ThemeToggle";
 import type { Conversation } from "@/types";
+import { MessageSquare, SquarePen, Trash2 } from "lucide-react";
 
 interface AppSidebarProps {
   conversations: Conversation[];
@@ -31,9 +31,11 @@ export function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex h-8 items-center gap-2 overflow-hidden rounded-md px-2 group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center">
+            <div className="flex h-8 items-center gap-2 overflow-hidden rounded-md px-2 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! group-data-[collapsible=icon]:justify-center">
               <MessageSquare className="h-4 w-4 shrink-0 group-data-[collapsible=icon]:hidden" />
-              <span className="flex-1 truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">AskDB</span>
+              <span className="flex-1 truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+                AskDB
+              </span>
               <SidebarTrigger />
             </div>
           </SidebarMenuItem>
