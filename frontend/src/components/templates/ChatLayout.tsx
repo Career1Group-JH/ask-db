@@ -1,4 +1,4 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/organisms/AppSidebar";
 import { ChatMessages } from "@/components/organisms/ChatMessages";
 import { ChatInput } from "@/components/molecules/ChatInput";
@@ -44,9 +44,7 @@ export function ChatLayout() {
         onDelete={deleteConversation}
       />
       <div className="relative flex h-svh w-full flex-col">
-        <header className="flex h-11 shrink-0 items-center px-3">
-          <SidebarTrigger className="-ml-1" />
-        </header>
+        <div className="h-3 shrink-0" />
 
         {isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center px-4">

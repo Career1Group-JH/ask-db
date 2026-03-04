@@ -1,4 +1,4 @@
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash2, MessageSquare } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -6,6 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/atoms/ThemeToggle";
 import type { Conversation } from "@/types";
@@ -29,6 +30,13 @@ export function AppSidebar({
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarHeader>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <div className="flex h-8 items-center gap-2 overflow-hidden rounded-md px-2 group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center">
+              <MessageSquare className="h-4 w-4 shrink-0 group-data-[collapsible=icon]:hidden" />
+              <span className="flex-1 truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">AskDB</span>
+              <SidebarTrigger />
+            </div>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={onNew} tooltip="Neuer Chat">
               <SquarePen className="h-4 w-4 shrink-0" />
@@ -73,7 +81,7 @@ export function AppSidebar({
           </SidebarMenu>
         )}
 
-        <div className="mt-auto p-3 group-data-[collapsible=icon]:hidden">
+        <div className="mt-auto p-3">
           <ThemeToggle />
         </div>
       </SidebarContent>

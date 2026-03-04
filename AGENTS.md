@@ -73,6 +73,7 @@ ask-db/
 - Business context: maintained in YAML files under `backend/app/context/`
 - Context extraction: `backend/scripts/extract_context.py` parses PHP enums + models from the source codebase to generate enum/column mappings. Output is committed as `clientoffice.generated.yaml` — manual context stays in `clientoffice.yaml`.
 - Chat memory: sliding window (last 5 messages verbatim) + LLM-generated summary for older messages
+- Versioning: central `VERSION` file is single source of truth. After bumping, run `pnpm run sync-version` in `frontend/` to update `package.json`. This is required before every commit that changes the version.
 - No testing, linting, or auth in PoC phase
 
 ## Domain Knowledge (ClientOffice)
