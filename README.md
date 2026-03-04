@@ -11,26 +11,36 @@ cp .env.example .env
 
 # 2. Place DB dump in db/dumps/ (imported on first start)
 
-# 3. Start
+# 3. Start everything (DB + Backend + Frontend)
 docker compose up --build
 ```
 
-Backend runs at http://localhost:8000 — interactive docs at http://localhost:8000/docs
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| Swagger docs | http://localhost:8000/docs |
+| DB (MySQL) | localhost:3307 |
 
-## Usage
+### Local frontend development
 
 ```bash
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{"question": "How many active participants does OC have?"}'
+# Start DB + Backend in background
+docker compose up -d db backend
+
+# Start Vite dev server
+cd frontend
+pnpm install
+pnpm dev
+# → http://localhost:5173 (API proxied to localhost:8000)
 ```
 
 ## Structure
 
 ```
 backend/   → FastAPI (Python)
+frontend/  → React + TypeScript + shadcn/ui
 db/        → MariaDB dump + docs
-frontend/  → React app (coming later)
 ```
 
 See [AGENTS.md](AGENTS.md) for technical details and [CHANGELOG.md](CHANGELOG.md) for version history.

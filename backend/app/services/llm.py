@@ -172,14 +172,31 @@ async def generate_sql(
     api_key: str,
     execute_fn=None,
     product: str = "clientoffice",
+    history: list[dict[str, str]] | None = None,
+    history_summary: str = "",
 ) -> dict[str, Any]:
     """Multi-step SQL generation. Returns {reasoning, sql, steps}."""
     system_prompt = build_system_prompt(schema_text, product)
 
-    messages = [
+    messages: list[dict[str, str]] = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": question},
     ]
+
+    if history_summary:
+        messages.append({"role": "user", "content":
+            f"Context from earlier conversation:\n{history_summary}"})
+        messages.append({"role": "assistant", "content":
+            "Understood, I have the context from the earlier conversation."})
+
+    for entry in (history or []):
+        messages.append({"role": "user", "content": entry["question"]})
+        messages.append({"role": "assistant", "content": json.dumps({
+            "action": "answer",
+            "reasoning": entry["answer"],
+            "sql": entry["sql"],
+        })})
+
+    messages.append({"role": "user", "content": question})
 
     all_steps: list[dict[str, Any]] = []
 
@@ -250,6 +267,7 @@ async def interpret_results(
     model: str,
     api_key: str,
     product: str = "clientoffice",
+    history_summary: str = "",
 ) -> str:
     """Send SQL results back to the LLM to generate a natural language answer."""
     ctx = _load_business_context(product)
@@ -267,6 +285,10 @@ async def interpret_results(
     if truncated:
         results_text += f"  ... ({len(rows)} rows total, showing first {max_rows_for_interpretation})\n"
 
+    conversation_context = ""
+    if history_summary:
+        conversation_context = f"\nCONVERSATION CONTEXT (earlier questions in this chat):\n{history_summary}\n"
+
     _set_api_keys(api_key)
     response = await acompletion(
         model=model,
@@ -279,6 +301,7 @@ async def interpret_results(
                     f"Answer in the SAME LANGUAGE as the user's question. "
                     f"Be concise but complete. Translate enum values to their business meaning.\n\n"
                     f"BUSINESS CONTEXT:\n{context_section}"
+                    f"{conversation_context}"
                 ),
             },
             {
@@ -290,6 +313,40 @@ async def interpret_results(
                     f"Please provide a clear, concise answer to the question based on these results."
                 ),
             },
+        ],
+        api_key=api_key,
+    )
+    return response.choices[0].message.content.strip()
+
+
+async def summarize_history(
+    messages: list[dict[str, str]],
+    existing_summary: str,
+    model: str,
+    api_key: str,
+) -> str:
+    """Condense older chat messages into a compact summary for token management."""
+    _set_api_keys(api_key)
+
+    formatted_messages = ""
+    for msg in messages:
+        formatted_messages += f"Q: {msg['question']}\nA: {msg['answer']}\nSQL: {msg['sql']}\n\n"
+
+    prompt_parts = [
+        "Condense the following database Q&A conversation into a compact summary. "
+        "Retain ALL relevant details: table names, column names, filter values, "
+        "JOIN paths, discovered slugs/enums, and key numeric results. "
+        "The summary will be used as context for future SQL generation.\n\n"
+    ]
+    if existing_summary:
+        prompt_parts.append(f"EXISTING SUMMARY:\n{existing_summary}\n\n")
+    prompt_parts.append(f"NEW MESSAGES TO INCORPORATE:\n{formatted_messages}")
+
+    response = await acompletion(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You are a concise summarizer for database conversations."},
+            {"role": "user", "content": "".join(prompt_parts)},
         ],
         api_key=api_key,
     )

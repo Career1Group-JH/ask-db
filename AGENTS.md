@@ -11,20 +11,27 @@ Internal tool that converts natural language questions into SQL queries against 
 - **Database**: MariaDB 11 (local prod dump for PoC)
 - **DB Driver**: aiomysql (async connection pool)
 - **Config**: pydantic-settings with `.env` file
-- **Containers**: Docker Compose (backend + db services)
-- **Frontend**: Vite + React + TypeScript + shadcn/ui (not yet implemented)
+- **Containers**: Docker Compose (backend + db + frontend services)
+- **Frontend**: Vite + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui
+- **Data Fetching**: TanStack Query v5 (`useMutation` for POST requests)
+- **Persistence**: localStorage for conversation history (PoC phase)
 
 ## Architecture
 
 ```
-POST /query { "question": "..." }
+POST /query { "question": "...", "history": [...], "history_summary": "..." }
   → Load DB schema from INFORMATION_SCHEMA (columns, types, foreign keys — cached)
   → Build system prompt: schema + business context YAML
+  → Inject conversation context (summary + recent history)
   → Multi-step LLM agent (up to 5 rounds):
       explore → run discovery queries → explore more or answer
   → Validate final SQL (SELECT only, enforce LIMIT)
   → Execute SQL against MariaDB
-  → Return { sql, reasoning, columns, rows, row_count, steps }
+  → Return { sql, reasoning, answer, columns, rows, row_count, steps }
+
+POST /summarize { "messages": [...], "existing_summary": "..." }
+  → LLM condenses older conversation messages into compact summary
+  → Return { summary }
 ```
 
 ## Project Structure
@@ -35,26 +42,37 @@ ask-db/
 │   ├── main.py           # App entry, CORS, lifespan
 │   ├── config.py         # Settings (pydantic-settings)
 │   ├── db.py             # aiomysql connection pool
-│   ├── routers/query.py  # POST /query endpoint
+│   ├── routers/query.py  # POST /query + POST /summarize endpoints
 │   ├── services/
 │   │   ├── schema.py     # INFORMATION_SCHEMA reader
-│   │   ├── llm.py        # LLM integration (litellm)
+│   │   ├── llm.py        # LLM integration (litellm) — generate_sql, interpret_results, summarize_history
 │   │   └── validator.py  # SQL validation
 │   └── context/
 │       ├── clientoffice.yaml           # Manual business domain context
 │       └── clientoffice.generated.yaml # Auto-extracted enums (from PHP codebase)
+├── frontend/src/         # React application (Atomic Design)
+│   ├── components/
+│   │   ├── ui/           # shadcn/ui primitives (auto-generated)
+│   │   ├── atoms/        # Spinner, ThemeToggle
+│   │   ├── molecules/    # ChatInput, SqlBlock, ResultTable
+│   │   ├── organisms/    # ChatMessage, ChatMessages, AppSidebar
+│   │   └── templates/    # ChatLayout
+│   ├── hooks/            # useConversations, useQueryMutation
+│   ├── lib/              # api.ts, storage.ts, constants.ts, utils.ts
+│   └── types/            # TypeScript interfaces
 ├── db/dumps/             # SQL dump files (gitignored)
-├── frontend/             # React app (not yet implemented)
-└── docker-compose.yml    # Backend + MariaDB services
+└── docker-compose.yml    # Backend + MariaDB + Frontend services
 ```
 
 ## Conventions
 
 - Python: async/await everywhere, no sync DB calls
+- Frontend: Atomic Design (atoms → molecules → organisms → templates), no inline styles, Tailwind-only
 - Config: all secrets and environment-specific values in `.env`, never hardcoded
 - SQL validation: only SELECT statements allowed, LIMIT enforced
 - Business context: maintained in YAML files under `backend/app/context/`
 - Context extraction: `backend/scripts/extract_context.py` parses PHP enums + models from the source codebase to generate enum/column mappings. Output is committed as `clientoffice.generated.yaml` — manual context stays in `clientoffice.yaml`.
+- Chat memory: sliding window (last 5 messages verbatim) + LLM-generated summary for older messages
 - No testing, linting, or auth in PoC phase
 
 ## Domain Knowledge (ClientOffice)
