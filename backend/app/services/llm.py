@@ -185,7 +185,6 @@ async def generate_sql(
 
     for step in range(MAX_EXPLORATION_STEPS + 1):
         result = await _call_llm(messages, model, api_key)
-        all_steps.append(result)
 
         if result["action"] == "answer" or step == MAX_EXPLORATION_STEPS:
             return {
@@ -193,6 +192,8 @@ async def generate_sql(
                 "sql": result.get("sql", ""),
                 "steps": all_steps,
             }
+
+        all_steps.append(result)
 
         exploration_queries = result.get("exploration_queries", [])
         if not exploration_queries or execute_fn is None:

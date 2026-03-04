@@ -28,6 +28,45 @@ domain_vocabulary:
     "Aktiver Teilnehmer" / "active participant" means deals.status = 1 (ONGOING only).
     STARTING_SOON (status=0) is NOT active — the participant has not started yet.
 
+  termination_type: >
+    deals.terminationType specifies HOW a deal ended (not IF):
+    0 = REGULAR (Reguläres Ende),
+    1 = ABORTION (Abbruch),
+    2 = REVOCATION (Stornierung).
+    Always use deals.status (not terminationType) to check whether a deal was cancelled.
+
+  abort_reasons: >
+    deals.abortReason (only set when status=3 ABORTED):
+    1 = WORK_FOUND (Neuen Job gefunden),
+    2 = EARLY_COMPLETION (Vorzeitige Prüfung bestanden),
+    3 = POOR_PERFORMANCE (Mangelnde Leistung),
+    4 = LONG_ABSENCE (Längere Fehlzeiten),
+    5 = MATERNITY_LEAVE (Mutterschutz),
+    6 = TERMINATION_BY_PROVIDER (Beendigung seitens Anbieter),
+    7 = CONTRACT_TERMINATION (Kündigung Arbeitsverhältnis),
+    8 = PARTICIPANT_QUIT (TN wünscht Abbruch),
+    9 = OTHER (Sonstige Gründe).
+
+  revocation_reasons: >
+    deals.revocationReason (only set when status=4 REVOKED):
+    1 = BEFORE_CONTRACT (Storno vor WV-Abschluss),
+    2 = WITHDRAWAL_RIGHT (Rücktrittsrecht),
+    3 = NOT_FUNDABLE (Nicht mehr förderfähig),
+    4 = OTHER (Sonstige Gründe).
+
+  business_segment: >
+    deals.businessSegment identifies the funding/payment model:
+    0 = FBW Bildungsgutschein (Weiterbildung),
+    1 = FBW Bildungsgutschein (Umschulung),
+    2 = FBW QCG (Qualifizierungschancengesetz),
+    3 = Selbstzahler Privat,
+    4 = Selbstzahler Firmenkunden.
+    When users ask about "Selbstzahler", filter businessSegment IN (3, 4).
+    When users ask about "gefördert" or "BGS", filter businessSegment IN (0, 1, 2).
+
+  time_model: >
+    deals.timeModel: 'fulltime' = Vollzeit, 'parttime' = Teilzeit.
+
   participants_table: >
     The participants.name column is a URL slug (e.g. 'paul-josef-ochotzki'), NOT a display name.
     Always use participants.firstname and participants.lastname for human-readable names.
@@ -38,22 +77,35 @@ domain_vocabulary:
     Each deal contains multiple courses (Kurse) via the deals_modules table.
     To count or list courses for a deal, always JOIN through deals_modules to educations.
     deals → deals_modules (deal_id) → educations (course_id).
+    deals_modules.type: 0 = MODULE (Soll-Module), 1 = SALES (Zusatz-Module Sales), 2 = SUPPORT (Zusatz-Module Teilnehmerbetreuung).
+    deals_modules.state: 'open' = Wartend, 'sended' = Freigeschaltet (auto), 'unlock' = Freigeschaltet (manuell), 'lock' = Gesperrt.
 
   education_types: >
     The educations table has a type column:
-    0 = Ausbildungsprogramm (umbrella training program),
+    0 = Weiterbildung (umbrella training program),
     1 = Kurs (individual course),
-    2 = Lektion (lesson),
-    3 = Lerninhalt (learning content).
+    2 = Modul (module),
+    3 = Lerneinheit (learning unit),
+    4 = Kombination (combination).
     When users ask about "Kurse" (courses), always filter educations.type = 1.
     The educations.name column contains URL slugs (lowercase, hyphenated, no umlauts).
+    educations.status: 0 = Entwurf, 1 = Aktiviert, 2 = Deaktiviert.
+
+  companions_and_roles: >
+    The companionsDeals table links companions (staff) to deals via role:
+    0 = UNKNOWN, 1 = SETTER (Sales Setting), 2 = CLOSER (Sales Closing),
+    3 = COACH (Teilnehmer Coach), 4 = AFA_CONSULTANT (Afa Berater),
+    5 = DRV_CONSULTANT (DRV Berater), 6 = SUPERVISOR (Vorgesetzter).
+    When users ask about "Coach" or "Betreuer", filter companionsDeals.role = 3.
+    When users ask about "Closer", filter companionsDeals.role = 2.
 
   absences_and_attendance: >
     There are TWO separate concepts:
     1) SUBMITTED ABSENCES (absences table): Explicitly reported absences (illness, vacation, etc.).
        Each row = one calendar week. monday-friday = booleans (0/1).
-       state: 0 = REVIEW, 1 = OKAY (approved), 2 = MANUALLY_EDITED. Filter state IN (1, 2) for confirmed.
-       reason: illness, vacation, holiday, job-interview, other, abort.
+       state: 0 = REVIEW (Überprüfung), 1 = OKAY (bestätigt). Filter state = 1 for confirmed.
+       reason: 'illness' (Krankheit), 'vacation' (Urlaub), 'holiday' (Feiertag),
+       'job-interview' (Vorstellungsgespräch), 'other' (Sonstige), 'abort' (Abbruch).
        Use this for questions about reported/submitted absences, sick days, vacation.
     2) ACTUAL ATTENDANCE / LEARNING TIME: Tracked via presences table and aggregated on deals.
        deals.plannedLearningTimeInMinutes = expected learning time.
@@ -62,6 +114,29 @@ domain_vocabulary:
        Use this for questions about attendance rate, learning time deficit, who is behind.
     When users ask about "Fehlzeiten" or "Abwesenheiten" without context, use the absences table.
     When users ask about "Anwesenheitsquote", "Lernzeit", or "im Minus", use the deals fields.
+
+  presences_table: >
+    The presences table tracks daily attendance per deal per week.
+    monday-friday columns use PresenceDayStatus:
+    0 = OUTSIDE_DEAL (Tag außerhalb des Deals), 1 = REPORTED_ABSENT (Abwesend gemeldet),
+    2 = CONFIRMED_PRESENT (Anwesenheit bestätigt), 3 = HOLIDAY (Feiertag), 4 = NOT_CONFIRMED.
+    presences.state: 0 = REVIEW, 1 = OKAY.
+
+  bgs_and_wv: >
+    BGS (Bildungsgutschein) and WV (Weiterbildungsvertrag) track document workflows on deals:
+    deals.bgsStatus: 0 = nicht vorhanden, 1 = Blanko, 2 = in Arbeit, 3 = ausgefüllt, 4 = an AfA verschickt.
+    deals.wvStatus: 0 = nicht erstellt, 1 = wird erstellt, 2 = unterschriftslos, 3 = an TN verschickt,
+    4 = vom TN geöffnet, 5 = unterschrieben, 6 = an AfA verschickt, 7 = abgebrochen.
+
+  job_found: >
+    deals.jobFoundStatus tracks whether a participant found a job after training:
+    0 = NO_RESPONSE (Keine Rückmeldung), 1 = NOT_YET_FOUND (Bisher ohne Job), 2 = FOUND (Job gefunden).
+    deals.jobFoundAt = date when job was found. deals.jobStartsAt = date of job start.
+
+  internal_exams: >
+    The internalExams table tracks exams per deal.
+    type: 0 = UNKNOWN, 1 = DEAL (per deal), 2 = CUSTOM (individuell).
+    status: 0 = PLANNED, 1 = UNLOCKED, 2 = PASSED, 3 = FAILED, 4 = ABORTED, 5 = COMPLETED_MANUALLY, 6 = REVOKED.
 
   collation_warning: >
     This database has mixed collations. When JOINing on varchar/text columns

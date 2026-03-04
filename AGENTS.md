@@ -6,7 +6,7 @@ Internal tool that converts natural language questions into SQL queries against 
 
 ## Tech Stack
 
-- **Backend**: FastAPI (Python 3.12), async throughout
+- **Backend**: FastAPI (Python 3.13), async throughout
 - **LLM**: litellm (provider-agnostic — OpenAI, Anthropic, etc. via `LLM_MODEL` env var)
 - **Database**: MariaDB 11 (local prod dump for PoC)
 - **DB Driver**: aiomysql (async connection pool)
@@ -24,8 +24,7 @@ POST /query { "question": "..." }
       explore → run discovery queries → explore more or answer
   → Validate final SQL (SELECT only, enforce LIMIT)
   → Execute SQL against MariaDB
-  → Run LLM-generated sanity check query for plausibility context
-  → Return { sql, reasoning, columns, rows, row_count, sanity, steps }
+  → Return { sql, reasoning, columns, rows, row_count, steps }
 ```
 
 ## Project Structure
@@ -42,7 +41,8 @@ ask-db/
 │   │   ├── llm.py        # LLM integration (litellm)
 │   │   └── validator.py  # SQL validation
 │   └── context/
-│       └── clientoffice.yaml  # Business domain context
+│       ├── clientoffice.yaml           # Manual business domain context
+│       └── clientoffice.generated.yaml # Auto-extracted enums (from PHP codebase)
 ├── db/dumps/             # SQL dump files (gitignored)
 ├── frontend/             # React app (not yet implemented)
 └── docker-compose.yml    # Backend + MariaDB services
@@ -54,6 +54,7 @@ ask-db/
 - Config: all secrets and environment-specific values in `.env`, never hardcoded
 - SQL validation: only SELECT statements allowed, LIMIT enforced
 - Business context: maintained in YAML files under `backend/app/context/`
+- Context extraction: `backend/scripts/extract_context.py` parses PHP enums + models from the source codebase to generate enum/column mappings. Output is committed as `clientoffice.generated.yaml` — manual context stays in `clientoffice.yaml`.
 - No testing, linting, or auth in PoC phase
 
 ## Domain Knowledge (ClientOffice)

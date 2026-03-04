@@ -14,6 +14,9 @@ build/
 db/dumps/*.sql
 db/dumps/*.sql.gz
 
+# Generated context (re-generate via backend/scripts/extract_context.py)
+*.generated.yaml
+
 # IDE
 .vscode/
 .idea/

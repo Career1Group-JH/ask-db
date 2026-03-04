@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [0.2.0] - 2026-03-04
+
+#### Added
+
+- Context extraction script (`backend/scripts/extract_context.py`) — parses PHP enums and model column mappings from a source codebase to auto-generate business context
+- Expanded business context YAML with 12 new enum sections: termination types, abort/revocation reasons, business segments, companion roles, presences, BGS/WV workflows, job tracking, internal exams, and deals_modules details
+
+#### Changed
+
+- Python 3.12 → 3.13, FastAPI pinned to >=0.135.0
+- Response structure: `steps` array now contains only exploration steps; final answer lives exclusively in top-level `reasoning`/`sql` (removes redundancy)
+- `AGENTS.md`: added post-PoC refactoring notes for context extraction (GitHub hook / submodule)
+
 ### [0.1.1] - 2026-03-04
 
 #### Added
