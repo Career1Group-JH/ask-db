@@ -75,7 +75,12 @@ def build_system_prompt(schema_text: str, product: str = "clientoffice") -> str:
     ctx = _load_business_context(product)
     context_section = _build_context_section(ctx)
 
+    today = __import__('datetime').date.today().isoformat()
+
     return f"""You are a SQL expert for a MariaDB database. You convert natural language questions into correct SQL SELECT queries.
+
+TODAY'S DATE: {today}
+When users mention relative dates ("bis März", "letzter Monat", "dieses Jahr"), always resolve them relative to today's date.
 
 You work in multiple steps: first you EXPLORE the data to understand it, then you write the final query.
 
