@@ -1,0 +1,68 @@
+product: ClientOffice
+description: >
+  ClientOffice is a CRM/LMS platform for managing training programs,
+  participants (Teilnehmer), and deals. Each deal represents a participant's
+  enrollment in a training program.
+
+domain_vocabulary:
+  tenants:
+    OC: tenant_id = 2
+    CN: tenant_id = 3
+
+  deal_statuses: >
+    The deals.status column determines the lifecycle stage of a participant's enrollment:
+    0 = STARTING_SOON (Startet bald, not yet started),
+    1 = ONGOING (Laufend, currently active),
+    2 = FINISHED (Abgeschlossen, completed),
+    3 = ABORTED (Abgebrochen, participant dropped out),
+    4 = REVOKED (Storniert, deal was revoked/cancelled externally).
+    When users say "abgeschlossen" or "beendet", filter deals.status = 2.
+    When users say "aktiv" or "laufend", filter deals.status = 1.
+    When users say "storniert" or "Stornierung", filter deals.status = 4.
+    When users say "abgebrochen" or "Abbruch", filter deals.status = 3.
+    The column terminationType specifies the termination reason, NOT whether a deal is cancelled — always use status for that.
+    IMPORTANT: To check if a participant "finished" or "completed" a course, always use deals.status = 2.
+    Do NOT use deals_progress.done — that tracks individual learning activities, not course completion.
+
+  active_participant: >
+    "Aktiver Teilnehmer" / "active participant" means deals.status = 1 (ONGOING only).
+    STARTING_SOON (status=0) is NOT active — the participant has not started yet.
+
+  participants_table: >
+    The participants.name column is a URL slug (e.g. 'paul-josef-ochotzki'), NOT a display name.
+    Always use participants.firstname and participants.lastname for human-readable names.
+    Filter participants by tenant via deals.tenant_id, not participants.tenant_id.
+
+  deal_structure: >
+    A deal represents a participant's enrollment in a training program (Ausbildungsprogramm).
+    Each deal contains multiple courses (Kurse) via the deals_modules table.
+    To count or list courses for a deal, always JOIN through deals_modules to educations.
+    deals → deals_modules (deal_id) → educations (course_id).
+
+  education_types: >
+    The educations table has a type column:
+    0 = Ausbildungsprogramm (umbrella training program),
+    1 = Kurs (individual course),
+    2 = Lektion (lesson),
+    3 = Lerninhalt (learning content).
+    When users ask about "Kurse" (courses), always filter educations.type = 1.
+    The educations.name column contains URL slugs (lowercase, hyphenated, no umlauts).
+
+  absences_and_attendance: >
+    There are TWO separate concepts:
+    1) SUBMITTED ABSENCES (absences table): Explicitly reported absences (illness, vacation, etc.).
+       Each row = one calendar week. monday-friday = booleans (0/1).
+       state: 0 = REVIEW, 1 = OKAY (approved), 2 = MANUALLY_EDITED. Filter state IN (1, 2) for confirmed.
+       reason: illness, vacation, holiday, job-interview, other, abort.
+       Use this for questions about reported/submitted absences, sick days, vacation.
+    2) ACTUAL ATTENDANCE / LEARNING TIME: Tracked via presences table and aggregated on deals.
+       deals.plannedLearningTimeInMinutes = expected learning time.
+       deals.actualLearningTimeInMinutes = actual tracked learning time.
+       deals.learningTimeCoverage = actual/planned * 100 (attendance percentage).
+       Use this for questions about attendance rate, learning time deficit, who is behind.
+    When users ask about "Fehlzeiten" or "Abwesenheiten" without context, use the absences table.
+    When users ask about "Anwesenheitsquote", "Lernzeit", or "im Minus", use the deals fields.
+
+  collation_warning: >
+    This database has mixed collations. When JOINing on varchar/text columns
+    between different tables, add COLLATE utf8mb4_unicode_ci to one side.

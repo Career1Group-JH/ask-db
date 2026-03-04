@@ -1,0 +1,26 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# DB dumps (large files, not in version control)
+db/dumps/*.sql
+db/dumps/*.sql.gz
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (frontend)
+node_modules/
