@@ -8,8 +8,14 @@ from app.config import get_settings
 from app.db import close_pool, create_pool
 from app.routers import query
 
-_VERSION_FILE = Path(__file__).resolve().parents[2] / "VERSION"
-__version__ = _VERSION_FILE.read_text().strip() if _VERSION_FILE.exists() else "0.0.0"
+def _find_version() -> str:
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / "VERSION"
+        if candidate.is_file():
+            return candidate.read_text().strip()
+    return "0.0.0"
+
+__version__ = _find_version()
 
 
 @asynccontextmanager

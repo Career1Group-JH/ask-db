@@ -11,7 +11,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Natural-language answer generation — LLM interprets SQL results and returns a human-readable `answer` field alongside raw data
 - Recruiting & TalentHub domain vocabulary (workMode, employmentType, isTalentHubRegistered, jobPortalProfileStatus)
-- Central `VERSION` file as single source of truth; FastAPI reads it dynamically at startup
+- Central `VERSION` file as single source of truth; FastAPI discovers it by walking up the directory tree (works in both local dev and Docker)
 
 #### Changed
 
