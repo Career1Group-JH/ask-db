@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "geist/font/sans.css";
+@import "geist/font/mono.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -117,8 +119,14 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
     @apply bg-background text-foreground;
-    }
+    font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  code, pre {
+    font-family: "Geist Mono", ui-monospace, monospace;
+  }
 }

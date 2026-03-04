@@ -2,7 +2,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/organisms/AppSidebar";
 import { ChatMessages } from "@/components/organisms/ChatMessages";
 import { ChatInput } from "@/components/molecules/ChatInput";
-import { ThemeToggle } from "@/components/atoms/ThemeToggle";
 import { useConversations } from "@/hooks/useConversations";
 import { useQueryMutation } from "@/hooks/useQueryMutation";
 
@@ -33,6 +32,8 @@ export function ChatLayout() {
     }
   };
 
+  const isEmpty = (activeConversation?.messages.length ?? 0) === 0 && !isPending;
+
   return (
     <SidebarProvider>
       <AppSidebar
@@ -43,21 +44,29 @@ export function ChatLayout() {
         onDelete={deleteConversation}
       />
       <div className="relative flex h-svh w-full flex-col">
-        <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur-sm">
-          <SidebarTrigger />
-          <span className="text-sm font-semibold tracking-tight">AskDB</span>
-          <div className="ml-auto">
-            <ThemeToggle />
-          </div>
+        <header className="flex h-11 shrink-0 items-center px-3">
+          <SidebarTrigger className="-ml-1" />
         </header>
 
-        <ChatMessages
-          messages={activeConversation?.messages ?? []}
-          isPending={isPending}
-          error={error}
-        />
-
-        <ChatInput onSend={handleSend} disabled={isPending} />
+        {isEmpty ? (
+          <div className="flex flex-1 flex-col items-center justify-center px-4">
+            <h1 className="mb-8 text-3xl font-semibold text-foreground/80">
+              Was möchtest du wissen?
+            </h1>
+            <div className="w-full max-w-2xl">
+              <ChatInput onSend={handleSend} disabled={isPending} />
+            </div>
+          </div>
+        ) : (
+          <>
+            <ChatMessages
+              messages={activeConversation?.messages ?? []}
+              isPending={isPending}
+              error={error}
+            />
+            <ChatInput onSend={handleSend} disabled={isPending} />
+          </>
+        )}
       </div>
     </SidebarProvider>
   );

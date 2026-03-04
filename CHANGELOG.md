@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [0.6.0] - 2026-03-04
+
+#### Added
+
+- **Table export**: CSV and Excel download buttons below result tables (full dataset, not just visible rows)
+- **Progressive loading**: Tables show first 50 rows as preview, "Load more" button to reveal additional rows in 50-row increments
+- **Safety limit warning**: Amber banner when backend's 100K row safety limit is reached, indicating possible data truncation
+- **Geist font**: Modern typography with Geist Sans and Geist Mono, antialiased rendering
+
+#### Changed
+
+- **Backend SQL limits**: Removed forced `LIMIT 5000` from LLM prompt — LLM now decides based on query intent. System safety net at 100K rows (was 1000)
+- **LLM interpreter prompt**: Now returns 1-3 sentence summary instead of repeating individual rows (table is already displayed)
+- **LLM language default**: German by default, English only when user's question is clearly English
+- **Chat input**: Textarea stays editable while LLM is thinking (only send button disabled)
+- **Page title**: Changed from "frontend" to "AskDB"
+
 ### [0.5.0] - 2026-03-04
 
 #### Changed

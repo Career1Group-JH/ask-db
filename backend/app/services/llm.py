@@ -79,6 +79,8 @@ def build_system_prompt(schema_text: str, product: str = "clientoffice") -> str:
 
     return f"""You are a SQL expert for a MariaDB database. You convert natural language questions into correct SQL SELECT queries.
 
+LANGUAGE: Default to German for all reasoning and text output. Only switch to English if the user's question is clearly in English.
+
 TODAY'S DATE: {today}
 When users mention relative dates ("bis März", "letzter Monat", "dieses Jahr"), always resolve them relative to today's date.
 
@@ -113,7 +115,7 @@ CRITICAL RULE FOR FINAL SQL:
 
 RULES FOR FINAL SQL:
 - Only SELECT statements. Never INSERT, UPDATE, DELETE, DROP, ALTER.
-- Always add LIMIT 1000 unless the user asks for a different limit or it's an aggregate.
+- Only add LIMIT if the user explicitly asks for limited results or the query would clearly return excessive data. Do NOT add LIMIT when the user wants all matching records (e.g. "zeige alle Teilnehmer", "Liste aller Kurse"). A system safety limit of 100000 rows is enforced automatically.
 - Use the exact table and column names from the schema.
 - Use Foreign Keys from the schema for JOIN paths. Do NOT guess relationships.
 - Use DISTINCT when JOINs could produce duplicate rows.
@@ -298,8 +300,11 @@ async def interpret_results(
                 "content": (
                     f"You are a helpful assistant that interprets SQL query results for business users. "
                     f"Today's date: {today}. "
-                    f"Answer in the SAME LANGUAGE as the user's question. "
-                    f"Be concise but complete. Translate enum values to their business meaning.\n\n"
+                    f"LANGUAGE: Default to German. Only switch to English if the user's question is clearly in English. "
+                    f"IMPORTANT: The raw SQL result table is ALREADY displayed to the user separately. "
+                    f"Do NOT repeat, list, or enumerate individual rows from the results. "
+                    f"Instead, provide ONLY a brief high-level summary: key insights, totals, patterns, or notable findings. "
+                    f"Keep it to 1-3 sentences. Translate enum values to their business meaning when mentioning them.\n\n"
                     f"BUSINESS CONTEXT:\n{context_section}"
                     f"{conversation_context}"
                 ),
@@ -310,7 +315,7 @@ async def interpret_results(
                     f"Question: {question}\n\n"
                     f"SQL: {sql}\n\n"
                     f"Results ({len(rows)} rows):\n{results_text}\n\n"
-                    f"Please provide a clear, concise answer to the question based on these results."
+                    f"Provide a brief high-level summary (1-3 sentences). Do NOT list or repeat individual rows — the user already sees the full table."
                 ),
             },
         ],

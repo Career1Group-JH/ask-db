@@ -6,7 +6,7 @@ FORBIDDEN_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 
-DEFAULT_LIMIT = 1000
+SAFETY_LIMIT = 100_000
 
 AGGREGATE_FUNCTIONS = re.compile(
     r"\b(COUNT|SUM|AVG|MIN|MAX)\s*\(", re.IGNORECASE
@@ -31,6 +31,6 @@ def validate_sql(sql: str) -> str:
 
     if not re.search(r"\bLIMIT\b", cleaned, re.IGNORECASE):
         if not AGGREGATE_FUNCTIONS.search(cleaned):
-            cleaned = f"{cleaned}\nLIMIT {DEFAULT_LIMIT}"
+            cleaned = f"{cleaned}\nLIMIT {SAFETY_LIMIT}"
 
     return cleaned
