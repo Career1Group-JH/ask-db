@@ -28,12 +28,6 @@ class QueryRequest(BaseModel):
     )
 
 
-class SanityCheck(BaseModel):
-    description: str
-    value: int
-    ratio: str
-
-
 class QueryResponse(BaseModel):
     question: str
     reasoning: str
@@ -41,34 +35,7 @@ class QueryResponse(BaseModel):
     columns: list[str]
     rows: list[list[Any]]
     row_count: int
-    sanity: SanityCheck | None = None
     steps: list[dict[str, Any]]
-
-
-async def _run_sanity_check(
-    pool, sanity_query: str, sanity_description: str, row_count: int
-) -> SanityCheck | None:
-    """Execute the LLM-provided sanity query and build a context object."""
-    if not sanity_query or not sanity_description:
-        return None
-
-    sanity_query = sanity_query.strip().rstrip(";")
-    if not sanity_query.upper().startswith("SELECT"):
-        return None
-
-    try:
-        _, rows = await execute_query(pool, sanity_query)
-        value = rows[0][0] if rows else None
-        if value is None or not isinstance(value, (int, float)):
-            return None
-
-        return SanityCheck(
-            description=sanity_description,
-            value=int(value),
-            ratio=f"{row_count} von {int(value)}",
-        )
-    except Exception:
-        return None
 
 
 @router.post("/query", response_model=QueryResponse)
@@ -118,21 +85,12 @@ async def query(request: Request, body: QueryRequest):
             detail={"error": f"SQL execution error: {e}", "sql": validated_sql, "reasoning": reasoning, "steps": steps},
         )
 
-    row_count = len(rows)
-    sanity = await _run_sanity_check(
-        pool,
-        llm_result.get("sanity_query", ""),
-        llm_result.get("sanity_description", ""),
-        row_count,
-    )
-
     return QueryResponse(
         question=body.question,
         reasoning=reasoning,
         sql=validated_sql,
         columns=columns,
         rows=rows,
-        row_count=row_count,
-        sanity=sanity,
+        row_count=len(rows),
         steps=steps,
     )

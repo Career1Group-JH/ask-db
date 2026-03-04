@@ -17,6 +17,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - LLM integration: `litellm` for provider-agnostic calls (Gemini 3.1 Pro Preview), structured output via JSON schema
 - Multi-step agent: LLM can run up to 5 exploration rounds before writing final SQL — discovers slugs, values, and relationships dynamically
 - SQL validator: allows only SELECT, enforces LIMIT, blocks destructive statements
-- Sanity check: LLM auto-generates a context query (COUNT/aggregate) per response for plausibility verification
+- Verification prompting: LLM is encouraged to verify assumptions before answering
 - Swagger UI: interactive examples for the `/query` endpoint
 - `AGENTS.md` for AI agent context

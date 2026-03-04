@@ -36,14 +36,6 @@ STEP_RESPONSE_SCHEMA = {
                     "type": "string",
                     "description": "The final SQL SELECT statement (only when action=answer)",
                 },
-                "sanity_query": {
-                    "type": "string",
-                    "description": "A simple COUNT/aggregate query that gives context for the result (only when action=answer). Example: if the main query lists active participants for a tenant, the sanity query could count ALL deals for that tenant to provide a reference number.",
-                },
-                "sanity_description": {
-                    "type": "string",
-                    "description": "Short human-readable label for what the sanity query measures, e.g. 'Alle Deals bei OC' or 'Alle Kurse im System'",
-                },
             },
             "required": ["action", "reasoning"],
             "additionalProperties": False,
@@ -122,15 +114,6 @@ RULES FOR FINAL SQL:
 - Use DISTINCT when JOINs could produce duplicate rows.
 - Always qualify column names with table aliases.
 
-SANITY CHECK (when action=answer):
-Always provide a "sanity_query" and "sanity_description" alongside your final SQL.
-The sanity query should be a simple COUNT or aggregate that gives CONTEXT for the result.
-Examples:
-- Main query lists active participants at OC → sanity: "SELECT COUNT(*) FROM deals WHERE tenant_id = 2 AND status = 1" / "Alle aktiven Deals bei OC"
-- Main query shows top courses → sanity: "SELECT COUNT(DISTINCT dm.course_id) FROM deals_modules dm JOIN deals d ON dm.deal_id = d.id WHERE d.status = 1" / "Alle Kurse mit aktiven Deals"
-- Main query counts absences → sanity: "SELECT COUNT(*) FROM absences WHERE tenant_id = 2" / "Alle Abwesenheiten bei OC"
-Choose the sanity query so it gives a meaningful REFERENCE NUMBER to judge if the main result is plausible.
-
 DATABASE SCHEMA (columns, types, keys, foreign keys):
 {schema_text}
 
@@ -203,8 +186,6 @@ async def generate_sql(
             return {
                 "reasoning": result.get("reasoning", ""),
                 "sql": result.get("sql", ""),
-                "sanity_query": result.get("sanity_query", ""),
-                "sanity_description": result.get("sanity_description", ""),
                 "steps": all_steps,
             }
 
