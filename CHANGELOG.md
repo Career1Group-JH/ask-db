@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [0.3.0] - 2026-03-04
+
+#### Added
+
+- Natural-language answer generation — LLM interprets SQL results and returns a human-readable `answer` field alongside raw data
+- Recruiting & TalentHub domain vocabulary (workMode, employmentType, isTalentHubRegistered, jobPortalProfileStatus)
+- Central `VERSION` file as single source of truth; FastAPI reads it dynamically at startup
+
+#### Changed
+
+- Exploration queries now validated through `validate_sql` before execution — prevents injection via crafted LLM output
+- SQL validator: extended forbidden keywords with `SLEEP`, `BENCHMARK`, `LOAD_FILE`, `INTO OUTFILE`, `INTO DUMPFILE`
+- Docker Compose: mounts `VERSION` file into backend container
+
 ### [0.2.0] - 2026-03-04
 
 #### Added

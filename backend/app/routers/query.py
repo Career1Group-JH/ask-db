@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.config import get_settings
 from app.db import execute_query
-from app.services.llm import generate_sql
+from app.services.llm import generate_sql, interpret_results
 from app.services.schema import load_schema
 from app.services.validator import SQLValidationError, validate_sql
 
@@ -30,6 +30,7 @@ class QueryRequest(BaseModel):
 
 class QueryResponse(BaseModel):
     question: str
+    answer: str
     reasoning: str
     sql: str
     columns: list[str]
@@ -85,8 +86,21 @@ async def query(request: Request, body: QueryRequest):
             detail={"error": f"SQL execution error: {e}", "sql": validated_sql, "reasoning": reasoning, "steps": steps},
         )
 
+    try:
+        answer = await interpret_results(
+            question=body.question,
+            sql=validated_sql,
+            columns=columns,
+            rows=rows,
+            model=settings.llm_model,
+            api_key=settings.llm_api_key,
+        )
+    except Exception:
+        answer = ""
+
     return QueryResponse(
         question=body.question,
+        answer=answer,
         reasoning=reasoning,
         sql=validated_sql,
         columns=columns,

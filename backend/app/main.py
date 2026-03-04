@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.db import close_pool, create_pool
 from app.routers import query
+
+_VERSION_FILE = Path(__file__).resolve().parents[2] / "VERSION"
+__version__ = _VERSION_FILE.read_text().strip() if _VERSION_FILE.exists() else "0.0.0"
 
 
 @asynccontextmanager
@@ -16,7 +20,7 @@ async def lifespan(app: FastAPI):
     await close_pool(app.state.pool)
 
 
-app = FastAPI(title="AskDB", lifespan=lifespan)
+app = FastAPI(title="AskDB", version=__version__, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

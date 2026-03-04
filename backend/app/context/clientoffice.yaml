@@ -138,6 +138,15 @@ domain_vocabulary:
     type: 0 = UNKNOWN, 1 = DEAL (per deal), 2 = CUSTOM (individuell).
     status: 0 = PLANNED, 1 = UNLOCKED, 2 = PASSED, 3 = FAILED, 4 = ABORTED, 5 = COMPLETED_MANUALLY, 6 = REVOKED.
 
+  recruiting_and_talenthub: >
+    The recruitingInformation table stores TalentHub/recruiting profile data per participant
+    (linked via participants.recruitingInformation_id).
+    recruitingInformation.workMode: 0 = Remote, 1 = Hybrid, 2 = On-Site.
+    recruitingInformation.employmentType: 0 = Vollzeit (Full-Time), 1 = Teilzeit (Part-Time).
+    recruitingInformation.isTalentHubRegistered: boolean, whether the participant is registered in TalentHub.
+    deals.jobPortalProfileStatus: 0 = keine Angabe (UNKNOWN), 1 = aktualisiert (UPDATED),
+    2 = Geprüft (REVIEWED), 3 = nicht aktualisiert (NOT_UPDATED).
+
   collation_warning: >
     This database has mixed collations. When JOINing on varchar/text columns
     between different tables, add COLLATE utf8mb4_unicode_ci to one side.

@@ -203,9 +203,16 @@ async def generate_sql(
                 "steps": all_steps,
             }
 
+        from app.services.validator import validate_sql, SQLValidationError
+
         exploration_results = []
         for eq in exploration_queries[:3]:
-            eq_limited = eq.strip().rstrip(";")
+            try:
+                eq_validated = validate_sql(eq)
+            except SQLValidationError as e:
+                exploration_results.append((["error"], [[f"Blocked: {e}"]]))
+                continue
+            eq_limited = eq_validated.strip().rstrip(";")
             if "LIMIT" not in eq_limited.upper():
                 eq_limited += f" LIMIT {EXPLORATION_ROW_LIMIT}"
             try:
@@ -233,3 +240,57 @@ async def generate_sql(
         "sql": "",
         "steps": all_steps,
     }
+
+
+async def interpret_results(
+    question: str,
+    sql: str,
+    columns: list[str],
+    rows: list[list[Any]],
+    model: str,
+    api_key: str,
+    product: str = "clientoffice",
+) -> str:
+    """Send SQL results back to the LLM to generate a natural language answer."""
+    ctx = _load_business_context(product)
+    context_section = _build_context_section(ctx)
+
+    today = __import__('datetime').date.today().isoformat()
+
+    max_rows_for_interpretation = 50
+    truncated = len(rows) > max_rows_for_interpretation
+    display_rows = rows[:max_rows_for_interpretation]
+
+    results_text = f"Columns: {columns}\n"
+    for row in display_rows:
+        results_text += f"  {row}\n"
+    if truncated:
+        results_text += f"  ... ({len(rows)} rows total, showing first {max_rows_for_interpretation})\n"
+
+    _set_api_keys(api_key)
+    response = await acompletion(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    f"You are a helpful assistant that interprets SQL query results for business users. "
+                    f"Today's date: {today}. "
+                    f"Answer in the SAME LANGUAGE as the user's question. "
+                    f"Be concise but complete. Translate enum values to their business meaning.\n\n"
+                    f"BUSINESS CONTEXT:\n{context_section}"
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Question: {question}\n\n"
+                    f"SQL: {sql}\n\n"
+                    f"Results ({len(rows)} rows):\n{results_text}\n\n"
+                    f"Please provide a clear, concise answer to the question based on these results."
+                ),
+            },
+        ],
+        api_key=api_key,
+    )
+    return response.choices[0].message.content.strip()

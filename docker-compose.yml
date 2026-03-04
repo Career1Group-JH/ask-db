@@ -24,6 +24,7 @@ services:
     volumes:
       - ./backend/app:/code/app:ro
       - ./.env:/code/.env:ro
+      - ./VERSION:/code/VERSION:ro
     env_file:
       - .env
     depends_on:
