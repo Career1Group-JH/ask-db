@@ -30,6 +30,7 @@ export interface QueryRequest {
   question: string;
   history: HistoryEntry[];
   history_summary: string;
+  error_context?: string;
 }
 
 export interface QueryResponse {

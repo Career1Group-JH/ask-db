@@ -176,6 +176,7 @@ async def generate_sql(
     product: str = "clientoffice",
     history: list[dict[str, str]] | None = None,
     history_summary: str = "",
+    error_context: str = "",
 ) -> dict[str, Any]:
     """Multi-step SQL generation. Returns {reasoning, sql, steps}."""
     system_prompt = build_system_prompt(schema_text, product)
@@ -198,7 +199,15 @@ async def generate_sql(
             "sql": entry["sql"],
         })})
 
-    messages.append({"role": "user", "content": question})
+    user_content = question
+    if error_context:
+        user_content += (
+            f"\n\nWICHTIG: Ein vorheriger Versuch, diese Frage zu beantworten, ist fehlgeschlagen.\n"
+            f"{error_context}\n"
+            f"Bitte analysiere den Fehler und generiere eine korrigierte Query."
+        )
+
+    messages.append({"role": "user", "content": user_content})
 
     all_steps: list[dict[str, Any]] = []
 

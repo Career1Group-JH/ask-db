@@ -6,12 +6,28 @@ import type {
   SummarizeResponse,
 } from "@/types";
 
+export class QueryError extends Error {
+  sql: string;
+  constructor(message: string, sql = "") {
+    super(message);
+    this.name = "QueryError";
+    this.sql = sql;
+  }
+}
+
 async function request<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new QueryError(
+      "Server nicht erreichbar. Bitte prüfe ob der Backend-Service läuft."
+    );
+  }
 
   if (!res.ok) {
     const detail = await res.json().catch(() => null);
@@ -19,7 +35,8 @@ async function request<T>(path: string, body: unknown): Promise<T> {
       typeof detail?.detail === "string"
         ? detail.detail
         : detail?.detail?.error ?? `Request failed (${res.status})`;
-    throw new Error(message);
+    const sql = detail?.detail?.sql ?? "";
+    throw new QueryError(message, sql);
   }
 
   return res.json();

@@ -40,6 +40,10 @@ class QueryRequest(BaseModel):
         default="",
         description="LLM-generated summary of older conversation messages beyond the sliding window.",
     )
+    error_context: str = Field(
+        default="",
+        description="Context from a previous failed attempt (error message + SQL) so the LLM can correct itself.",
+    )
 
 
 class QueryResponse(BaseModel):
@@ -83,6 +87,7 @@ async def query(request: Request, body: QueryRequest):
             execute_fn=run_exploration,
             history=history_dicts,
             history_summary=body.history_summary,
+            error_context=body.error_context,
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM error: {e}")

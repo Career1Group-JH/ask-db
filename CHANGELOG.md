@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [0.7.0] - 2026-03-05
+
+#### Added
+
+- **Retry on error**: When a query fails (validation, SQL execution, or network), a "Nochmal versuchen" button appears; retry sends the previous error + SQL as context so the LLM can self-correct
+- **SQL copy button**: One-click copy icon next to the SQL code block (with checkmark feedback)
+- **Immediate question display**: User question bubble appears instantly on send, no longer waits for API response
+
+#### Changed
+
+- **Network error handling**: Friendly German message ("Server nicht erreichbar…") instead of raw TypeError on connection failure
+- **Error state UX**: Failed first-message no longer snaps back to the empty splash screen; chat view stays visible with question + error
+- **Backend `error_context`**: New optional field on `POST /query` — previous error + SQL forwarded to the LLM prompt for self-healing retries
+
 ### [0.6.3] - 2026-03-05
 
 #### Changed

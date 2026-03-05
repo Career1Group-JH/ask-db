@@ -17,19 +17,23 @@ function getConversationById(
   return null;
 }
 
+interface MutationVariables {
+  question: string;
+  conversationId: string;
+  errorContext?: string;
+}
+
 export function useQueryMutation({
   activeConversation,
   addMessage,
   updateSummary,
 }: UseQueryMutationOptions) {
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async ({
       question,
       conversationId,
-    }: {
-      question: string;
-      conversationId: string;
-    }) => {
+      errorContext,
+    }: MutationVariables) => {
       const conv = getConversationById(activeConversation, conversationId);
       const messages = conv?.messages ?? [];
       let historySummary = conv?.historySummary ?? "";
@@ -65,6 +69,7 @@ export function useQueryMutation({
         question,
         history: recentHistory,
         history_summary: historySummary,
+        error_context: errorContext,
       });
 
       return { response, conversationId };
@@ -85,4 +90,9 @@ export function useQueryMutation({
       addMessage(conversationId, message);
     },
   });
+
+  return {
+    ...mutation,
+    variables: mutation.variables,
+  };
 }
