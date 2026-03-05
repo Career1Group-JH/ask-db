@@ -8,6 +8,10 @@ FORBIDDEN_KEYWORDS = re.compile(
 
 SAFETY_LIMIT = 100_000
 
+BLACKLISTED_TABLES = re.compile(
+    r"\busers\b", re.IGNORECASE
+)
+
 AGGREGATE_FUNCTIONS = re.compile(
     r"\b(COUNT|SUM|AVG|MIN|MAX)\s*\(", re.IGNORECASE
 )
@@ -27,6 +31,11 @@ def validate_sql(sql: str) -> str:
     if FORBIDDEN_KEYWORDS.search(cleaned):
         raise SQLValidationError(
             "Statement contains forbidden keywords (INSERT, UPDATE, DELETE, DROP, etc.)."
+        )
+
+    if BLACKLISTED_TABLES.search(cleaned):
+        raise SQLValidationError(
+            "Access to the 'users' table is not allowed."
         )
 
     if not re.search(r"\bLIMIT\b", cleaned, re.IGNORECASE):
